@@ -1,0 +1,116 @@
+Quite a lot of the ROM consists of uncompressed 4bpp graphics data:
+1000c0-22351f
+
+--------------------------------------------------------------------------------
+
+Graphics data for the main dialogue text box is copied into $7E9585.
+0x700 bytes of data that gets transferred to VRAM $4900.w with the DMA params:
+
+DMAPx: $00 - transfer unit is 1 byte
+BBADx: $18 - transfer to VRAM low byte
+VMAIN: $04 - use 8-bit address translation; inc VRAM addr by 1 after low byte
+
+Address translation means that the VRAM address you increment on each pass is
+converted this way when data is sent in: aaaaaaaaYYYxxxxx --> aaaaaaaaxxxxxYYY
+'x' bits select a tile horizontally (32 tile width)
+'Y' bits select a pixel row in a tile (8 pixels tall)
+
+Tile Molester calls the raw $7E9585 bytes' format "2-Dimensional" mode.
+
+Another way to think of it: characters are 16 pixels tall. The byte spacing
+between each pixel row is 32 bytes instead of 1. The next byte is in the same
+pixel row vertically but one tile over.
+
+--------------------------------------------------------------------------------
+
+Turns out, the font data format is identical to Otogirisou. Discovering that
+surprised me, but it makes sense because Manabu Yamana (founder of Heartbeat,
+developer for DQ VI SFC) was the programming director for Otogirisou.
+
+Metadata format is same as Otogirisou but with a small tweak for HiROM vs LoROM.
+Characters are grouped together by their dimensions, and each group has a
+five-byte metadata structure containing information about the group:
+
+00000000 11111111 22222222 33333333 44444444 
+RRRRRRRR WWWWRRRR [bank $C1 offset] --HHHH--
+R = range = 12-bit value for # characters in group
+W = width  = 4-bit value for width  of all characters in particular group
+H = height = 4-bit value for height of all characters in particular group
+Bytes 2 and 3: (little endian) offset in bank C1 for start of group's font data.
+
+For an explanation of how the font is decompressed, see my writeup for the font
+in Otogirisou: https://github.com/ButThouMust/otogirisou-tools/blob/main/notes/decompression%20-%20font.txt
+
+The 0x200 character is special, representing a space of width 4 and height 11.
+
+Important code locations:
+- $C02C92: main routine for handling a character encoding value
+  - $C029E6: run ASM for control code
+- $C02CB2: draw font data for one character to $7E9585 buffer for text box
+
+- $C03255: main routine for reading font data
+  * $C033A0: clear a 0x20 byte buffer used for one character's font data
+  * $C03286: get correct metadata structure for char, and read dimens/pointer
+  * $C03325: read font data, one pixel row at a time, into 0x20 byte buffer
+
+--------------------------------------------------------------------------------
+
+Main text uses a Huffman coding format that is almost the same as Otogirisou.
+The Huffman tree is in the same format, except that leaf nodes and inner nodes
+have their MSB respectively clear and set, versus the other way around.
+
+Perhaps most notable is that there are NO embedded pointers in the text itself.
+This makes the text dumper code a whole lot simpler than for Otogirisou.
+
+One nice change: you can read out Huffman codes from the raw binary data without
+needing to reverse the bits in a byte, like D4 (1101 0100) -> 2B (0010 1011).
+
+Important code:
+- $C02B69: read entry from Huffman text's pointer table at $C15BB5
+- $C02BB9: main loop for reading text; 00AC and 00AE are string terminators
+- $C02BD4: read text data from Huffman pointer
+
+Pointer format: 3 bytes encoding a relative offset in BITS from $F7175B.
+Table spans $C15BB5-$C165E6 (0xA32 bytes), a total of 0x366 (870) entries.
+The last entry is 237881 -> 46F10-1 -> $FB866B-1 plus however large the text is.
+
+Some discoveries:
+- It turns out that each pointer is used for 8 messages, or I'll call "text
+  blocks." Each block is terminated by either a [00AC] or [00AE] Huffman code.
+
+  Examples: pointer 0 is for text blocks 0-7, pointer 1 for blocks 8-F, etc.
+  If the game needs to read text block B, it will go to pointer 1 and skip
+  the first three blocks before displaying the appropriate text.
+  (0xB >> 3 = 1, and 0xB & 0x7 = 3)
+
+- In other words, the script has about 0x1B30 text blocks. Almost 7000 of them!
+  Unfortunately, you don't get the appropriate context for a block unless you
+  can figure out what situation triggers reading it. In other words, talking
+  to every single NPC, finding every event, picking every choice, etc.
+  I don't blame the NoPrgress translation for not being able to test everything.
+
+- If you would like to attempt identifying them, play your legally acquired ROM
+  of DQ VI in an emulator, open a debugger, put a write breakpoint on the
+  memory address $7E5998, and check the value that gets written.
+  Alternately, try comparing the JP script dump with the NoPrgress script.
+
+- This 8 blocks/pointer system is technically wasteful in terms of compute time,
+  but I would say it's a good trade-off versus dedicating a pointer for every
+  single block: 0x1B30 * 3 = 0x5190 = 20,880 bytes of pointers.
+
+- Haven't looked much into *how* the game sends in the correct block numbers to
+  the text engine. The first one in the game where Muriel/Milly speaks when
+  the Hero wakes up at the campfire uses block number 0x64. This gets sent in
+  using a JSL at $CA4BB7, which is followed by the bytes [64 00] at $CA4BBB.
+  Does the demo play send in the bytes from a different location?
+
+- Looking at the dump, the last block appears to be number 0x1B2C at $FB86E0-0,
+  but it is not properly terminated? After three lines and a WAIT, it starts
+  showing garbage text but does happen to terminate not too long after.
+
+--------------------------------------------------------------------------------
+
+Possible future things to look into:
+- Where and how are item names stored?
+- How does menu text get printed?
+- Is battle text in a different format?

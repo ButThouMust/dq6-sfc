@@ -1,0 +1,21 @@
+# Vim swap files
+**/*.swp
+
+# Do not upload ROMs, original or otherwise
+**/*.sfc
+**/*.smc
+
+# Do not upload any generated patches
+**/*.bps
+**/*.ips
+
+# Do not upload compiled Java bytecode
+**/*.class
+
+# Do not upload any script dumps or related data
+**/script dump*.txt
+huffman code dump.txt
+raw huffman tree data.txt
+
+# Do not upload generated binary files related to the font
+*font*.bin
