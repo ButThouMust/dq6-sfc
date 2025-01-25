@@ -199,8 +199,10 @@ public class DragonQuest6ScriptDumper {
 
         scriptOutput.write("#VAR(Ptr, CUSTOMPOINTER)\n");
         scriptOutput.write("#CREATEPTR(Ptr, \"LINEAR\", $400000, 24)\n\n");
+        
         scriptOutput.write("#VAR(PtrTbl, POINTERTABLE)\n");
-        scriptOutput.write("#PTRTBL(PtrTbl, $15BB5, 3, Ptr)\n\n");
+        String ptrTblInit = "#PTRTBL(PtrTbl, $%X, 3, Ptr)\n\n";
+        scriptOutput.write(String.format(ptrTblInit, PTR_TABLE_OFFSET));
 
         String commentLine = "// -----------------------------------------------------------------------------\n";
         scriptOutput.write(commentLine);
