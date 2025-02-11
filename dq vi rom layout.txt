@@ -25,7 +25,7 @@ pixel row vertically but one tile over.
 
 Turns out, the font data format is identical to Otogirisou. Discovering that
 surprised me, but it makes sense because Manabu Yamana (founder of Heartbeat,
-developer for DQ VI SFC) was the programming director for Otogirisou.
+the developer behind DQ VI SFC) was the programming director for Otogirisou.
 
 Metadata format is same as Otogirisou but with a small tweak for HiROM vs LoROM.
 Characters are grouped together by their dimensions, and each group has a
@@ -75,36 +75,36 @@ Table spans $C15BB5-$C165E6 (0xA32 bytes), a total of 0x366 (870) entries.
 The last entry is 237881 -> 46F10-1 -> $FB866B-1 plus however large the text is.
 
 Some discoveries:
-- It turns out that each pointer is used for 8 messages, or I'll call "text
-  blocks." Each block is terminated by either a [00AC] or [00AE] Huffman code.
+- It turns out that each pointer is used for blocks of 8 strings. Each string
+  is terminated by either a [00AC] or [00AE] Huffman code.
 
-  Examples: pointer 0 is for text blocks 0-7, pointer 1 for blocks 8-F, etc.
-  If the game needs to read text block B, it will go to pointer 1 and skip
-  the first three blocks before displaying the appropriate text.
+  Examples: pointer 0 is for strings 0-7, pointer 1 for strings 8-F, etc.
+  If the game needs to read string B, it will go to pointer 1 and skip
+  the first three strings displaying the appropriate text.
   (0xB >> 3 = 1, and 0xB & 0x7 = 3)
 
-- In other words, the script has about 0x1B30 text blocks. Almost 7000 of them!
-  Unfortunately, you don't get the appropriate context for a block unless you
+- In other words, the script has about 0x1B30 strings. Almost 7000 of them!
+  Unfortunately, you don't get the appropriate context for a string unless you
   can figure out what situation triggers reading it. In other words, talking
   to every single NPC, finding every event, picking every choice, etc.
   I don't blame the NoPrgress translation for not being able to test everything.
 
 - If you would like to attempt identifying them, play your legally acquired ROM
   of DQ VI in an emulator, open a debugger, put a write breakpoint on the
-  memory address $7E5998, and check the value that gets written.
+  memory address $7E5998, and check what values get written when reading text.
   Alternately, try comparing the JP script dump with the NoPrgress script.
 
-- This 8 blocks/pointer system is technically wasteful in terms of compute time,
-  but I would say it's a good trade-off versus dedicating a pointer for every
-  single block: 0x1B30 * 3 = 0x5190 = 20,880 bytes of pointers.
+- This 8 strings/pointer system is technically wasteful in terms of compute
+  time, but I would say it's a good trade-off versus dedicating a pointer for
+  every single string: 0x1B30 * 3 = 0x5190 = 20,880 bytes of pointers.
 
-- Haven't looked much into *how* the game sends in the correct block numbers to
-  the text engine. The first one in the game where Muriel/Milly speaks when
-  the Hero wakes up at the campfire uses block number 0x64. This gets sent in
+- Haven't looked much into *how* the game sends in the correct string numbers
+  to the text engine. The first one in the game where Muriel/Milly speaks when
+  the Hero wakes up at the campfire uses string number 0x64. This gets sent in
   using a JSL at $CA4BB7, which is followed by the bytes [64 00] at $CA4BBB.
   Does the demo play send in the bytes from a different location?
 
-- Looking at the dump, the last block appears to be number 0x1B2C at $FB86E0-0,
+- Looking at the dump, the last string seems to be number 0x1B2C at $FB86E0-0,
   but it is not properly terminated? After three lines and a WAIT, it starts
   showing garbage text but does happen to terminate not too long after.
 

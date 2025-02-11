@@ -13,10 +13,10 @@ public class DragonQuest6ScriptDumper {
     private static BufferedWriter scriptOutput;
 
     private static final int PTR_TABLE_OFFSET = 0x15BB5;
-    private static final int SCRIPT_START = 0xF7175B;
+    private static final int SCRIPT_START = 0x37175B;
     private static final int NUM_PTRS = 870;
     private static final int NUM_STRINGS_PER_PTR = 8;
-    private static final int FINAL_BLOCK_NUM = getBlockNum(NUM_PTRS - 1, 4);
+    private static final int FINAL_STRING_NUM = getStringNum(NUM_PTRS - 1, 4);
     private static int scriptPtrs[];
 
     private static ArrayList<Integer> tableHexValues;
@@ -147,7 +147,7 @@ public class DragonQuest6ScriptDumper {
         // start going left/right from the root of the Huffman tree
 
         // internal representation for non-leaves is using BYTE offsets instead
-        // of WORD offsets; to avoid putting in a special case, start with word
+        // of WORD offsets; to avoid putting in a special case, start with byte
         // offset for the root of the tree
         int huffTreeValue = (HUFF_TABLE_ENTRIES - 1) << 1;
         huffTreeValue |= 0x8000;
@@ -227,35 +227,33 @@ public class DragonQuest6ScriptDumper {
         }
     }
 
-    private static String blockComment = "// Block %4X (%3X-%d) @ 0x%6X-%d\n";
-    private static void printBlockComment(int ptrNum, int numStringsFound) throws IOException {
-        int blockNum = getBlockNum(ptrNum, numStringsFound);
-        if (blockNum > FINAL_BLOCK_NUM) {
+    private static String stringComment = "// String %4X (%3X-%d) @ 0x%6X-%d\n";
+    private static void printStringComment(int ptrNum, int numStringsFound) throws IOException {
+        int stringNum = getStringNum(ptrNum, numStringsFound);
+        if (stringNum > FINAL_STRING_NUM) {
             return;
         }
 
-        scriptOutput.write(String.format(blockComment, blockNum, ptrNum,
+        scriptOutput.write(String.format(stringComment, stringNum, ptrNum,
             numStringsFound, currByteOffset, bitOffset));
     }
 
-    private static int getBlockNum(int ptrNum, int numStringsFound) {
+    private static int getStringNum(int ptrNum, int numStringsFound) {
         return (ptrNum * NUM_STRINGS_PER_PTR) | numStringsFound;
     }
 
     private static void readTextForPointer(int ptrNum) throws IOException {
         int ptrTableEntry = scriptPtrs[ptrNum];
-        int cpuOffset = (ptrTableEntry >> 3) + SCRIPT_START;
+        currByteOffset = (ptrTableEntry >> 3) + SCRIPT_START;
         bitOffset = ptrTableEntry & 0x7;
-
-        currByteOffset = cpuOffset & 0x3FFFFF;
         romFile.seek(currByteOffset);
 
         int numStringsFound = 0;
-        printBlockComment(ptrNum, numStringsFound);
+        printStringComment(ptrNum, numStringsFound);
         scriptOutput.write("#WRITE(PtrTbl)\n");
         while (numStringsFound < NUM_STRINGS_PER_PTR) {
-            // check for final text block
-            if (getBlockNum(ptrNum, numStringsFound) > FINAL_BLOCK_NUM) {
+            // check for final text string
+            if (getStringNum(ptrNum, numStringsFound) > FINAL_STRING_NUM) {
                 break;
             }
 
@@ -269,7 +267,7 @@ public class DragonQuest6ScriptDumper {
                     scriptOutput.newLine();
                     scriptOutput.newLine();
                     if (numStringsFound != NUM_STRINGS_PER_PTR)
-                        printBlockComment(ptrNum, numStringsFound);
+                        printStringComment(ptrNum, numStringsFound);
                     break;
 
                 // check for line break
