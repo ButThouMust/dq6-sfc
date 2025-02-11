@@ -80,7 +80,7 @@ Some discoveries:
 
   Examples: pointer 0 is for strings 0-7, pointer 1 for strings 8-F, etc.
   If the game needs to read string B, it will go to pointer 1 and skip
-  the first three strings displaying the appropriate text.
+  the first three strings (8, 9, A) before displaying the appropriate text.
   (0xB >> 3 = 1, and 0xB & 0x7 = 3)
 
 - In other words, the script has about 0x1B30 strings. Almost 7000 of them!
@@ -110,7 +110,7 @@ Some discoveries:
 
 --------------------------------------------------------------------------------
 
-Possible future things to look into:
+Things to possibly look into in the future:
 - Where and how are item names stored?
 - How does menu text get printed?
 - Is battle text in a different format?
