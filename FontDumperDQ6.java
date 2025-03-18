@@ -4,6 +4,7 @@ import java.io.RandomAccessFile;
 
 public class FontDumperDQ6 {
 
+    private static final String ROM_NAME = "Dragon Quest VI - Maboroshi no Daichi (Japan).sfc";
     private static final int LOOKUP_TABLE_START = 0x159D2;
     private static final int PTR_TO_FONT_BANK_NUM = 0x03310;
     private static final int STRUCT_SIZE = 5;
@@ -24,10 +25,10 @@ public class FontDumperDQ6 {
     // -------------------------------------------------------------------------
 
     private static void readLookupTable() throws IOException {
-        romStream = new RandomAccessFile("Dragon Quest VI - Maboroshi no Daichi (Japan).sfc", "r");
+        romStream = new RandomAccessFile(ROM_NAME, "r");
 
-        // get the bank number for the font (should be 0x1F)
-        // turn it into a "ROM file" base offset, as in not a LoROM CPU offset
+        // get the bank number for the font (should be 0xC1)
+        // turn it into a "ROM file" base offset, as in not a HiROM CPU offset
         romStream.seek(PTR_TO_FONT_BANK_NUM);
         int fontBank = romStream.readUnsignedByte();
         int fontBankOffset = 0x10000 * (fontBank & 0x3F);
@@ -37,7 +38,7 @@ public class FontDumperDQ6 {
         for (int i = 0; i < NUM_CHAR_GROUPS; i++) {
             // format of 5-byte lookup table entry:
             // 00000000 11111111 22222222 33333333 44444444
-            // ssssssss WWWWssss [bank 1F  offset] 00HHHH00
+            // ssssssss WWWWssss [bank C1  offset] 00HHHH00
 
             int data[] = new int[STRUCT_SIZE];
             for (int j = 0; j < STRUCT_SIZE; j++) {
