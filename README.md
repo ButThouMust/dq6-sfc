@@ -1,4 +1,4 @@
-# dq6-sfc
+# dq-vi-sfc
 I randomly decided to try looking into the inner workings of Dragon Quest VI for Super Famicom in January 2025. I was surprised to find a decent amount of overlap between it and [Otogirisou](https://github.com/ButThouMust/otogirisou-english), and was able to adapt my font and script dumpers from that project for DQ VI.
 
 These tools use the original Japanese version of the game as a base, *not* the English translation patch by NoPrgress. The specification in the [No-Intro database](https://datomatic.no-intro.org/index.php?page=show_record&s=49&n=0650) is:
@@ -35,3 +35,14 @@ Where `[rom_file]` is a legally obtained Japanese ROM with the above specificati
 - Default names for the playable characters.
 - Names for items, weapons, armor, etc.
 - Identification of script control codes besides "end string" and "line break".
+
+## DQ III SNES 
+I later discovered that the developer of DQ VI SFC reused both systems for the font and the dialogue script in the SFC remake of DQ III. The only changes are in the pointers for where stuff is located!
+
+As a bonus, I thus made versions that will work with the revision of DQ III in [No-Intro](https://datomatic.no-intro.org/index.php?page=show_record&s=49&n=0648):
+```
+CRC32:	13836bd2
+MD5:	7c7c7db73b0608a184cc5e1d73d7695b
+SHA-1:	b711341e4b1022d7645c5313840874aebc01b7b7
+SHA-256:	dcf8fde55cec7095bc8b522820ffac65790a60054555f8665d54265d2ac36d8a
+```
