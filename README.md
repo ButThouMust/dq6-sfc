@@ -46,3 +46,5 @@ MD5:	7c7c7db73b0608a184cc5e1d73d7695b
 SHA-1:	b711341e4b1022d7645c5313840874aebc01b7b7
 SHA-256:	dcf8fde55cec7095bc8b522820ffac65790a60054555f8665d54265d2ac36d8a
 ```
+
+Please note that the table file for DQ III was sourced from [byuu's tools and notes](https://web.archive.org/web/20211020093652/https://www.romhacking.net/abandoned/dq3r_toolsbyuu.zip) that used to be available on RHDN's [abandoned projects page](https://web.archive.org/web/20220115061924/https://www.romhacking.net/abandoned/) (links to Wayback Machine).
