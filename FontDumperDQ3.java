@@ -33,7 +33,7 @@ public class FontDumperDQ3 {
         int fontBank = romStream.readUnsignedByte();
         int fontBankOffset = 0x10000 * (fontBank & 0x3F);
 
-        int totalCharsSoFar = 1;
+        int totalCharsSoFar = 0x201;
         romStream.seek(LOOKUP_TABLE_START);
         for (int i = 0; i < NUM_CHAR_GROUPS; i++) {
             // format of 5-byte lookup table entry:
@@ -50,9 +50,18 @@ public class FontDumperDQ3 {
             heightTable[i]    = data[4] >> 2;
             offsetTable[i]    = fontBankOffset + (data[2] | (data[3] << 8));
 
-            int lastCharInGroup = totalCharsSoFar + groupSizeTable[i] - 1;
-            String info = "Group %2d has %3X %X*%X chars (%3X-%3X) at 0x%6X\n";
-            System.out.printf(info, i + 1, groupSizeTable[i], widthTable[i], heightTable[i], totalCharsSoFar, lastCharInGroup, offsetTable[i]);
+            String rangeInfo = "";
+            if (groupSizeTable[i] == 1) {
+                rangeInfo = "char  (%3X)    ";
+                rangeInfo = String.format(rangeInfo, totalCharsSoFar);
+            }
+            else {
+                int lastCharInGroup = totalCharsSoFar + groupSizeTable[i] - 1;
+                rangeInfo = "chars (%3X-%3X)";
+                rangeInfo = String.format(rangeInfo, totalCharsSoFar, lastCharInGroup);
+            }
+            String info = "Group %2d has %3X %X*%X %s at 0x%6X\n";
+            System.out.printf(info, i + 1, groupSizeTable[i], widthTable[i], heightTable[i], rangeInfo, offsetTable[i]);
 
             totalCharsSoFar += groupSizeTable[i];
         }
